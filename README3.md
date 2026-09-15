@@ -92,6 +92,101 @@ Which feature would you like me to implement next?
 
 # Q3 Yes add those features. You can use multiple files
 
+```dart
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+import 'file_operations.dart';
+import 'grid_view_screen.dart';
+
+void main() {
+  runApp(FileManagerApp());
+}
+
+class FileManagerApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter File Manager',
+      theme: ThemeData.dark(),
+      home: FileManagerScreen(),
+    );
+  }
+}
+
+class FileManagerScreen extends StatefulWidget {
+  @override
+  _FileManagerScreenState createState() => _FileManagerScreenState();
+}
+
+class _FileManagerScreenState extends State<FileManagerScreen> {
+  late Directory currentDirectory;
+  List<FileSystemEntity> files = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    await Permission.storage.request();
+    _loadFiles();
+  }
+
+  Future<void> _loadFiles() async {
+    final dir = await getExternalStorageDirectory();
+    setState(() {
+      currentDirectory = dir!;
+      files = dir.listSync();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('File Manager'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.grid_view),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => GridViewScreen(files: files)),
+              );
+            },
+          ),
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: files.length,
+        itemBuilder: (context, index) {
+          final file = files[index];
+          return ListTile(
+            title: Text(file.path.split('/').last),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.drive_file_rename_outline),
+                  onPressed: () => renameFile(context, file, _loadFiles),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => deleteFile(file, _loadFiles),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
 I've updated the code to include:
 
 * **External Storage Access**
